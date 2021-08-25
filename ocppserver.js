@@ -6,6 +6,9 @@ const CALL_MESSAGE = 2; // Client-to-Server
 const CALLRESULT_MESSAGE = 3; // Server-to-Client
 const CALLERROR_MESSAGE = 4; // Server-to-Client
 
+const BOOT_NOTIFICATION = 'BootNotification';
+const STATUS_NOTIFICATION = 'StatusNotification';
+
 const wsOption = {
   port: PORT,
   handleProtocols: (protocols, req) => {
@@ -18,7 +21,7 @@ const wsOption = {
 
     if (clientId == null || clientId == undefined || clientId == "undefined") {
       console.log("Invalid clientid, returning 404");
-      return callback(false, 404);
+      return callback(false, 404, "Invalid clientid");
     }
 
     return callback(true);
@@ -32,7 +35,7 @@ const wsOption = {
  */
 const initServer = () => {
   const server = new WebSocket.Server(wsOption, () => {
-    console.log("Server is listening on port", PORT);
+    console.info("Server is listening on port", PORT);
   });
 
   server.on("error", (ws, req) => {
@@ -49,7 +52,7 @@ const initServer = () => {
     });
 
     socket.on("close", (err) => {
-      console.log("connection closed");
+      console.info("connection closed");
     });
   });
 };
@@ -71,7 +74,7 @@ const onMessage = (message, socket) => {
 
   if (msgType == CALL_MESSAGE) {
     switch (action) {
-      case "BootNotification":
+      case BOOT_NOTIFICATION:
         sendMessage(
           CALLRESULT_MESSAGE,
           msgId,
@@ -80,16 +83,12 @@ const onMessage = (message, socket) => {
           socket
         );
         break;
-      case "StatusNotification":
+      case STATUS_NOTIFICATION:
         sendMessage(
           CALLRESULT_MESSAGE,
           msgId,
           action,
-          {
-            status: "Accepted",
-            currentTime: new Date(),
-            heartbeatInterval: 300,
-          },
+          { status: "Accepted", currentTime: new Date(), heartbeatInterval: 300 },
           socket
         );
         break;
@@ -98,11 +97,7 @@ const onMessage = (message, socket) => {
           CALLERROR_MESSAGE,
           msgId,
           action,
-          {
-            status: "Rejected",
-            currentTime: new Date(),
-            heartbeatInterval: 300,
-          },
+          { status: "Rejected", currentTime: new Date(), heartbeatInterval: 300 },
           socket
         );
         break;
